@@ -152,7 +152,7 @@ of your WSGI script:
 
 ::
 
-   http://my.site.com/webhooks
+   http://my.site.com/webhooks/
 
 Docker
 ------
