@@ -54,7 +54,8 @@ def index():
 
     # Only POST is implemented - same effect as removing 'GET' in methods above
     if request.method != 'POST':
-        abort(405)
+        logging.warning("We got a $s request, this isn't supported", request.method)
+        abort(501)
 
     # Load config
     if isfile(join(path, 'config.json')):
@@ -71,6 +72,8 @@ def index():
 
     hooks = config.get('hooks_path', join(path, 'hooks'))
 
+    logging.info("Config loaded, handling request")
+
     # Allow Github IPs only
     if config.get('github_ips_only', True):
         src_ip = ip_address(
@@ -82,9 +85,7 @@ def index():
             if src_ip in ip_network(valid_ip):
                 break
         else:
-            logging.error('IP {} not allowed'.format(
-                src_ip
-            ))
+            logging.warning("We got a request from unauthorized IP: %s", src_ip)
             abort(403)
 
     # Enforce secret
@@ -93,10 +94,12 @@ def index():
         # Only SHA1 is supported
         header_signature = request.headers.get('X-Hub-Signature')
         if header_signature is None:
+            logging.warning("No signature found when expecting one")
             abort(403)
 
         sha_name, signature = header_signature.split('=')
         if sha_name != 'sha1':
+            logging.warning("Unsupported signature mech: %s", sha_name)
             abort(501)
 
         # HMAC requires the key to be bytes, but data is string
@@ -108,13 +111,14 @@ def index():
     # Implement ping
     event = request.headers.get('X-GitHub-Event', 'ping')
     if event == 'ping':
-        return jsonify({'msg': 'pong'})
+        logging.warning("Ping Pong")
+        return dumps({'msg': 'pong'})
 
     # Gather data
     try:
         payload = request.get_json()
     except Exception:
-        logging.warning('Request parsing failed')
+        logging.warning('Request parsing failed with exception %s', Exception)
         abort(400)
 
     # Determining the branch is tricky, as it only appears for certain event
