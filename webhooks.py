@@ -16,6 +16,9 @@
 # under the License.
 import logging
 from sys import stderr, hexversion
+logging.basicConfig(stream=stderr)
+# If you need troubleshooting logs, comment the previous line and uncomment the next one
+#logging.basicConfig(filename=/your/writable/path/for/hooks.log, level=10)
 
 import hmac
 from json import loads, dumps
