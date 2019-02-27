@@ -175,7 +175,6 @@ def index():
         scripts.append(join(hooks, '{event}-{name}-{branch}-background'.format(**meta)))
     if name:
         scripts.append(join(hooks, '{event}-{name}'.format(**meta)))
-        scripts.append(join(hooks, '{event}-{name}-background'.format(**meta)))
     scripts.append(join(hooks, '{event}'.format(**meta)))
     scripts.append(join(hooks, '{event}-background'.format(**meta)))
     scripts.append(join(hooks, 'all'))
@@ -241,6 +240,11 @@ def index():
     output = dumps(ran, sort_keys=True, indent=4)
     logging.info(output)
     return jsonify(ran)
+
+@application.route('/status', methods=['GET'])
+def status():
+    return jsonify({'status': 'ok'})
+
 
 if __name__ == '__main__':
     application.run(debug=True, host='0.0.0.0')
