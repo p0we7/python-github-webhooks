@@ -31,10 +31,7 @@ from flask import Flask, request, abort, jsonify
 logging.basicConfig(stream=stderr)
 
 application = Flask(__name__)
-
-###pjh
-#application.url_map.strict_slashes = False
-###pjh
+application.url_map.strict_slashes = False
 
 @application.route('/', methods=['GET', 'POST'])
 def index():
