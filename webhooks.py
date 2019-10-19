@@ -32,6 +32,9 @@ logging.basicConfig(stream=stderr)
 
 application = Flask(__name__)
 
+###pjh
+#application.url_map.strict_slashes = False
+###pjh
 
 @application.route('/', methods=['GET', 'POST'])
 def index():
@@ -160,10 +163,14 @@ def index():
     scripts = []
     if branch and name:
         scripts.append(join(hooks, '{event}-{name}-{branch}'.format(**meta)))
+        scripts.append(join(hooks, '{event}-{name}-{branch}-background'.format(**meta)))
     if name:
         scripts.append(join(hooks, '{event}-{name}'.format(**meta)))
+        scripts.append(join(hooks, '{event}-{name}-background'.format(**meta)))
     scripts.append(join(hooks, '{event}'.format(**meta)))
+    scripts.append(join(hooks, '{event}-background'.format(**meta)))
     scripts.append(join(hooks, 'all'))
+    scripts.append(join(hooks, 'all-background'))
 
     # Check permissions
     scripts = [s for s in scripts if isfile(s) and access(s, X_OK)]
@@ -179,23 +186,41 @@ def index():
     ran = {}
     for s in scripts:
 
-        proc = Popen(
-            [s, tmpfile, event],
-            stdout=PIPE, stderr=PIPE
-        )
-        stdout, stderr = proc.communicate()
+        if s.endswith('-background'):
+            # each backgrounded script gets its own tempfile
+            # in this case, the backgrounded script MUST clean up after this!!!
+            # the per-job tempfile will NOT be deleted here!
+            osfd2, tmpfile2 = mkstemp()
+            with fdopen(osfd2, 'w') as pf2:
+                pf2.write(dumps(payload))
 
-        ran[basename(s)] = {
-            'returncode': proc.returncode,
-            'stdout': stdout.decode('utf-8'),
-            'stderr': stderr.decode('utf-8'),
-        }
+            proc = Popen(
+                [s, tmpfile2, event],
+                stdout=PIPE, stderr=PIPE
+            )
 
-        # Log errors if a hook failed
-        if proc.returncode != 0:
-            logging.error('{} : {} \n{}'.format(
-                s, proc.returncode, stderr
-            ))
+            ran[basename(s)] = {
+                'backgrounded': 'yes'
+            }
+
+        else:
+            proc = Popen(
+                [s, tmpfile, event],
+                stdout=PIPE, stderr=PIPE
+            )
+            stdout, stderr = proc.communicate()
+
+            ran[basename(s)] = {
+                'returncode': proc.returncode,
+                'stdout': stdout.decode('utf-8'),
+                'stderr': stderr.decode('utf-8'),
+            }
+
+            # Log errors if a hook failed
+            if proc.returncode != 0:
+                logging.error('{} : {} \n{}'.format(
+                    s, proc.returncode, stderr
+                ))
 
     # Remove temporal file
     remove(tmpfile)
@@ -207,7 +232,6 @@ def index():
     output = dumps(ran, sort_keys=True, indent=4)
     logging.info(output)
     return jsonify(ran)
-
 
 if __name__ == '__main__':
     application.run(debug=True, host='0.0.0.0')
