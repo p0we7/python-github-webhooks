@@ -106,7 +106,9 @@ def index():
             abort(501)
 
         # HMAC requires the key to be bytes, but data is string
-        mac = hmac.new(str(secret), msg=request.data, digestmod=sha1)
+        # Convert key to ascii in unicode environment
+        # https://stackoverflow.com/questions/33455463/python-3-sign-a-message-with-key-sha512
+        mac = hmac.new(bytearray(secret, "ASCII"), msg=request.data, digestmod=sha1)
 
         if not constant_time_compare(str(mac.hexdigest()), str(signature)):
             abort(403)
