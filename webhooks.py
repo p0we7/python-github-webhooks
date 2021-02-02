@@ -21,6 +21,7 @@ logging.basicConfig(stream=stderr)
 #logging.basicConfig(filename=/your/writable/path/for/hooks.log, level=10)
 
 import hmac
+from hashlib import sha1
 from json import loads, dumps
 from subprocess import Popen, PIPE
 from tempfile import mkstemp
@@ -70,7 +71,6 @@ def index():
             "github_ips_only": False,
             "enforce_secret": "",
             "return_scripts_info": False,
-            "hooks_path": "/missing"
         }
 
     hooks = config.get('hooks_path', join(path, 'hooks'))
