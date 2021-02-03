@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from sys import stderr, hexversion
+from sys import stdout, stderr, hexversion
 logging.basicConfig(stream=stderr)
 # If you need troubleshooting logs, comment the previous line and uncomment the next one
 #logging.basicConfig(filename=/your/writable/path/for/hooks.log, level=10)
@@ -58,8 +58,8 @@ def index():
 
     # Only POST is implemented - same effect as removing 'GET' in methods above
     if request.method != 'POST':
-        logging.warning("We got a $s request, this isn't supported", request.method)
-        abort(501)
+        logging.warning("We got a {} request, this isn't supported".format(request.method))
+        abort(405)
 
     # Load config
     if isfile(join(path, 'config.json')):
