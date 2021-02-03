@@ -48,7 +48,7 @@ else:
 application = Flask(__name__)
 application.url_map.strict_slashes = False
 
-@application.route('/', methods=['GET', 'POST'])
+@application.route('/webhooks', methods=['GET', 'POST'])
 def index():
     """
     Main WSGI application entry.
